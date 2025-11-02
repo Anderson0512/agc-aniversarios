@@ -17,6 +17,7 @@ import BirthdayCard from './BirthdayCard';
 import { birthdayData } from '../data/birthdays';
 import logoAGC from '../assets/img/logo_agc.jpg';
 import MenuIcon from '@mui/icons-material/Menu';
+import Footer from './Footer';
 
 const BirthdayList = () => {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -119,7 +120,7 @@ const BirthdayList = () => {
       </Drawer>
       <Box 
         sx={{ 
-          mb: 4,
+          mb: 2,
           width: '80%',
           mx: 'auto'
         }}
@@ -180,6 +181,8 @@ const BirthdayList = () => {
           </Typography>
         )}
       </Grid>
+
+      <Footer />
     </Container>
   );
 };
