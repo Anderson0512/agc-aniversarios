@@ -1,31 +1,122 @@
-import { Container, Grid, Typography, Box, Stack } from '@mui/material';
-import { format, getMonth } from 'date-fns';
+import React from 'react';
+import { 
+  Container, 
+  Grid, 
+  Typography, 
+  Box, 
+  Stack, 
+  Drawer,
+  List,
+  ListItem,
+  ListItemText,
+  IconButton
+} from '@mui/material';
+import { format, getMonth, setMonth } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import BirthdayCard from './BirthdayCard';
 import { birthdayData } from '../data/birthdays';
 import logoAGC from '../assets/img/logo_agc.jpg';
+import MenuIcon from '@mui/icons-material/Menu';
 
 const BirthdayList = () => {
-  const currentMonth = getMonth(new Date());
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [selectedMonth, setSelectedMonth] = React.useState(getMonth(new Date()));
   
-  // Filtra aniversariantes do mês atual
-  const currentMonthBirthdays = birthdayData.filter(person => {
-    const birthMonth = getMonth(new Date(person.date));
-    return birthMonth === currentMonth;
+  // Array com todos os meses do ano
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date(2025, i, 1);
+    return format(date, 'MMMM', { locale: ptBR });
   });
 
-  const currentMonthName = format(new Date(), 'MMMM', { locale: ptBR });
+  // Filtra aniversariantes do mês selecionado
+  const currentMonthBirthdays = birthdayData.filter(person => {
+    const birthMonth = getMonth(new Date(person.date));
+    return birthMonth === selectedMonth;
+  });
+
+  const currentMonthName = format(new Date(2025, selectedMonth, 1), 'MMMM', { locale: ptBR });
+
+  const handleMonthSelect = (monthIndex) => {
+    setSelectedMonth(monthIndex);
+    setDrawerOpen(false);
+  };
 
   return (
     <Container>
+      <Box sx={{
+        position: 'fixed',
+        left: '1cm',
+        top: '4.5rem',
+        zIndex: 1000
+      }}>
+        <IconButton 
+          sx={{ 
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            color: '#fff',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.3)'
+            }
+          }}
+          onClick={() => setDrawerOpen(true)}
+        >
+          <MenuIcon />
+        </IconButton>
+      </Box>
+
       <Typography variant="h3" component="h1" sx={{ 
-        my: 4, 
+        my: 4,
         textAlign: 'center',
         color: '#fff',
         textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
       }}>
         Aniversariantes de {currentMonthName}
       </Typography>
+
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+      >
+        <Box sx={{ width: 250, pt: 2, bgcolor: '#BE93E4', height: '100%' }}>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              textAlign: 'center', 
+              color: '#fff',
+              mb: 2,
+              px: 2
+            }}
+          >
+            Selecione o Mês
+          </Typography>
+          <List>
+            {months.map((month, index) => (
+              index !== selectedMonth && (
+                <ListItem 
+                  key={month} 
+                  button 
+                  onClick={() => handleMonthSelect(index)}
+                  sx={{
+                    color: '#fff',
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                  }}
+                >
+                  <ListItemText 
+                    primary={month.charAt(0).toUpperCase() + month.slice(1)} 
+                    sx={{ 
+                      '.MuiListItemText-primary': { 
+                        color: '#fff'
+                      }
+                    }}
+                  />
+                </ListItem>
+              )
+            ))}
+          </List>
+        </Box>
+      </Drawer>
       <Box 
         sx={{ 
           mb: 4,
