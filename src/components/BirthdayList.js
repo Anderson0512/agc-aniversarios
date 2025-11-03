@@ -11,17 +11,35 @@ import {
   ListItemText,
   IconButton
 } from '@mui/material';
-import { format, getMonth, setMonth } from 'date-fns';
+import { format, getMonth } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import BirthdayCard from './BirthdayCard';
-import { birthdayData } from '../data/birthdays';
 import logoAGC from '../assets/img/logo_agc.jpg';
 import MenuIcon from '@mui/icons-material/Menu';
 import Footer from './Footer';
+import { loadSheetData } from '../services/sheets';
 
 const BirthdayList = () => {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [selectedMonth, setSelectedMonth] = React.useState(getMonth(new Date()));
+  const [birthdayData, setBirthdayData] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  // Carrega os dados da planilha quando o componente é montado
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await loadSheetData();
+        setBirthdayData(data);
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
   
   // Array com todos os meses do ano
   const months = Array.from({ length: 12 }, (_, i) => {
@@ -48,7 +66,14 @@ const BirthdayList = () => {
         position: 'fixed',
         left: '1cm',
         top: '4.5rem',
-        zIndex: 1000
+        zIndex: 1000,
+        '@media (max-width: 560px)': {
+          position: 'static',
+          display: 'flex',
+          justifyContent: 'flex-start',
+          marginLeft: '1rem',
+          marginBottom: '1rem'
+        }
       }}>
         <IconButton 
           sx={{ 
@@ -165,20 +190,28 @@ const BirthdayList = () => {
       </Box>
 
       <Grid container spacing={2} justifyContent="center">
-        {currentMonthBirthdays.map(person => (
-          <Grid item key={person.id} xs={12} sm={6} md={4}>
-            <BirthdayCard
-              id={person.id}
-              name={person.name}
-              date={person.date}
-              photo={person.photo}
-            />
-          </Grid>
-        ))}
-        {currentMonthBirthdays.length === 0 && (
+        {loading ? (
           <Typography variant="h6" sx={{ my: 4, textAlign: 'center' }}>
-            Não há aniversariantes neste mês.
+            Carregando aniversariantes...
           </Typography>
+        ) : (
+          <>
+            {currentMonthBirthdays.map(person => (
+              <Grid item key={person.id} xs={12} sm={6} md={4}>
+                <BirthdayCard
+                  id={person.id}
+                  name={person.name}
+                  date={person.date}
+                  photo={person.photo}
+                />
+              </Grid>
+            ))}
+            {currentMonthBirthdays.length === 0 && (
+              <Typography variant="h6" sx={{ my: 4, textAlign: 'center' }}>
+                Não há aniversariantes neste mês.
+              </Typography>
+            )}
+          </>
         )}
       </Grid>
 
