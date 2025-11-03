@@ -11,7 +11,7 @@ import {
   ListItemText,
   IconButton
 } from '@mui/material';
-import { format, getMonth, setMonth } from 'date-fns';
+import { format, getMonth } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import BirthdayCard from './BirthdayCard';
 import { birthdayData } from '../data/birthdays';
@@ -48,7 +48,14 @@ const BirthdayList = () => {
         position: 'fixed',
         left: '1cm',
         top: '4.5rem',
-        zIndex: 1000
+        zIndex: 1000,
+        '@media (max-width: 560px)': {
+          position: 'static',
+          display: 'flex',
+          justifyContent: 'flex-start',
+          marginLeft: '1rem',
+          marginBottom: '1rem'
+        }
       }}>
         <IconButton 
           sx={{ 
