@@ -1,37 +1,66 @@
-import { GoogleSpreadsheet } from 'google-spreadsheet';
+// URL do Google Sheets em formato CSV (carregada das variáveis de ambiente)
+const SHEET_URL = process.env.REACT_APP_SHEET_URL;
 
-// Estas informações você obterá do arquivo de credenciais JSON baixado
-const SPREADSHEET_ID = 'seu_spreadsheet_id'; // ID da sua planilha
-const SHEET_ID = 'seu_sheet_id'; // ID da aba específica (opcional)
-const CLIENT_EMAIL = 'seu_client_email'; // Do arquivo de credenciais
-const PRIVATE_KEY = 'sua_private_key'; // Do arquivo de credenciais
+// Verifica se a URL foi definida
+if (!SHEET_URL) {
+  console.error('A variável de ambiente REACT_APP_SHEET_URL não foi definida!');
+}
 
 export const loadSheetData = async () => {
   try {
-    const doc = new GoogleSpreadsheet(SPREADSHEET_ID);
+    const response = await fetch(SHEET_URL);
+    if (!response.ok) {
+      throw new Error(`Erro ao buscar dados da planilha: ${response.status} ${response.statusText}`);
+    }
 
-    // Autenticação usando as credenciais de serviço
-    await doc.useServiceAccountAuth({
-      client_email: CLIENT_EMAIL,
-      private_key: PRIVATE_KEY,
-    });
+    const csvText = await response.text();
+    
+    // Converte o CSV para array de objetos
+    const rows = csvText
+      .split('\n')
+      .slice(1) // Remove o cabeçalho
+      .filter(row => row.trim()) // Remove linhas vazias
+      .map((row, index) => {
+        
+        // Divide a linha usando vírgula, mas preserva vírgulas dentro de aspas
+        const fields = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        
+        // Remove aspas e espaços em branco de cada campo
+        const cleanFields = fields.map(field => field.replace(/^"|"$/g, '').trim());
+        
+        const [rawId, email, name, date, area, about, hobby, photo] = cleanFields;
+        
+        // Remove o espaço do ID
+        const id = rawId ? rawId.replace(/\s+/g, '') : rawId;
+        
+        // Processa a URL da foto do Google Drive para URL de miniatura
+        let cleanPhoto = photo ? photo.replace(/^["']|["']$/g, '').trim() : '';
+        
+        // Converte URL do Google Drive para URL de miniatura
+        if (cleanPhoto && cleanPhoto.includes('drive.google.com')) {
+          const fileId = cleanPhoto.match(/[-\w]{25,}/);
+          if (fileId && fileId[0]) {
+            // Usa o formato de miniatura do Google Drive que é mais confiável
+            cleanPhoto = `https://drive.google.com/thumbnail?id=${fileId[0]}&sz=w400`;
+          }
+        }
 
-    // Carrega as informações da planilha
-    await doc.loadInfo();
+        const person = {
+          id: id.toString(), // Garante que o ID é uma string
+          email: email || '',
+          name: name || '',
+          date: date || '',
+          area: area || '',
+          about: about || '',
+          hobby: hobby || '',
+          photo: cleanPhoto
+        };
+        
+        return person;
+      });
 
-    // Obtém a primeira aba da planilha (ou use doc.sheetsById[SHEET_ID] para uma aba específica)
-    const sheet = doc.sheetsByIndex[0];
-
-    // Carrega todas as linhas
-    const rows = await sheet.getRows();
-
-    // Mapeia as linhas para o formato esperado pela aplicação
-    return rows.map(row => ({
-      id: row.id,
-      name: row.name,
-      date: row.date,
-      photo: row.photo
-    }));
+    console.log('Total de registros processados:', rows.length);
+    return rows;
 
   } catch (error) {
     console.error('Erro ao carregar dados do Google Sheets:', error);

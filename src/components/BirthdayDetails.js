@@ -1,3 +1,4 @@
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Container, 
@@ -12,17 +13,43 @@ import {
 } from '@mui/material';
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
-import { birthdayData } from '../data/birthdays';
+import { loadSheetData } from '../services/sheets';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EmailIcon from '@mui/icons-material/Email';
 import WorkIcon from '@mui/icons-material/Work';
-import InstagramIcon from '@mui/icons-material/Instagram';
 
 const BirthdayDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [person, setPerson] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
   
-  const person = birthdayData.find(p => p.id === parseInt(id));
+  React.useEffect(() => {
+    const fetchPerson = async () => {
+      try {
+        const decodedId = decodeURIComponent(id);
+        const data = await loadSheetData();
+        const foundPerson = data.find(p => {
+          return p.id === decodedId;
+        });
+        setPerson(foundPerson);
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPerson();
+  }, [id]);
+  
+  if (loading) {
+    return (
+      <Container>
+        <Typography variant="h5">Carregando...</Typography>
+      </Container>
+    );
+  }
   
   if (!person) {
     return (
@@ -41,7 +68,9 @@ const BirthdayDetails = () => {
     );
   }
 
-  const birthDate = new Date(person.date);
+  // Converte a data do formato DD/MM/YYYY para YYYY-MM-DD
+  const [day, month, year] = person.date.split('/');
+  const birthDate = new Date(year, month - 1, day); // month - 1 porque os meses em JS começam do 0
   const formattedDate = format(birthDate, "d 'de' MMMM 'de' yyyy", { locale: ptBR });
 
   return (
@@ -85,36 +114,22 @@ const BirthdayDetails = () => {
           
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
             <WorkIcon color="action" />
-            <Typography>{person.department}</Typography>
+            <Typography>{person.area}</Typography>
           </Stack>
 
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 3 }}>
-            <InstagramIcon color="action" />
-            <Typography>
-              <a 
-                href="https://www.instagram.com/igreja_agc/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                style={{ color: 'inherit', textDecoration: 'none' }}
-              >
-                {person.instagram}
-              </a>
-            </Typography>
-          </Stack>
-
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
             Sobre
           </Typography>
           <Typography paragraph color="text.secondary">
-            {person.description}
+            {person.about}
           </Typography>
 
           <Typography variant="h6" gutterBottom>
             Hobbies
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {person.hobbies.map((hobby, index) => (
-              <Chip key={index} label={hobby} variant="outlined" />
+            {person.hobby && person.hobby.split(';').map((hobby, index) => (
+              <Chip key={index} label={hobby.trim()} variant="outlined" />
             ))}
           </Box>
         </CardContent>
