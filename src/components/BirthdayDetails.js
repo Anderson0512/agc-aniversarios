@@ -28,7 +28,8 @@ const BirthdayDetails = () => {
     const fetchPerson = async () => {
       try {
         const decodedId = decodeURIComponent(id);
-        const data = await loadSheetData();
+        const result = await loadSheetData();
+        const data = result && result.rows ? result.rows : result || [];
         const foundPerson = data.find(p => {
           return p.id === decodedId;
         });
@@ -57,10 +58,9 @@ const BirthdayDetails = () => {
         <Typography variant="h5">Pessoa não encontrada</Typography>
         <Button 
           variant="contained"
-          color="primary"
           startIcon={<ArrowBackIcon />} 
           onClick={() => navigate('/')}
-          sx={{ mt: 2 }}
+          sx={{ mt: 2, backgroundColor: '#ff6f91', color: '#fff', '&:hover': { backgroundColor: '#ff4f78' } }}
         >
           Voltar
         </Button>
@@ -69,18 +69,23 @@ const BirthdayDetails = () => {
   }
 
   // Converte a data do formato DD/MM/YYYY para YYYY-MM-DD
-  const [day, month, year] = person.date.split('/');
-  const birthDate = new Date(year, month - 1, day); // month - 1 porque os meses em JS começam do 0
-  const formattedDate = format(birthDate, "d 'de' MMMM 'de' yyyy", { locale: ptBR });
+  let formattedDate = 'Data não disponível';
+  if (person.date) {
+    const parts = person.date.split('/');
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      const birthDate = new Date(year, month - 1, day); // month - 1 porque os meses em JS começam do 0
+      formattedDate = format(birthDate, "d 'de' MMMM 'de' yyyy", { locale: ptBR });
+    }
+  }
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Button 
         variant="contained"
-        color="primary"
         startIcon={<ArrowBackIcon />} 
         onClick={() => navigate('/')}
-        sx={{ mb: 3 }}
+        sx={{ mb: 3, backgroundColor: '#ff6f91', color: '#fff', '&:hover': { backgroundColor: '#ff4f78' } }}
       >
         Voltar
       </Button>

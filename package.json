@@ -14,6 +14,7 @@
     "date-fns": "^4.1.0",
     "google-spreadsheet": "^5.0.2",
     "googleapis": "^164.1.0",
+    "papaparse": "^5.5.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-icons": "^5.5.0",

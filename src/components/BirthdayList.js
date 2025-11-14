@@ -29,8 +29,13 @@ const BirthdayList = () => {
   React.useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await loadSheetData();
-        setBirthdayData(data);
+        const result = await loadSheetData();
+        // loadSheetData agora retorna { rows, ignored } ou apenas rows
+        if (result && result.rows) {
+          setBirthdayData(result.rows);
+        } else {
+          setBirthdayData(result || []);
+        }
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
       } finally {
@@ -52,9 +57,13 @@ const BirthdayList = () => {
 
   // Filtra aniversariantes do mês selecionado
   const currentMonthBirthdays = birthdayData.filter(person => {
-    const [, month] = person.date.split('/'); // usando _ para ignorar o dia
+    if (!person.date) return false;
+    const parts = person.date.split('/');
+    if (parts.length < 2) return false;
+    const month = parseInt(parts[1], 10);
+    if (isNaN(month)) return false;
     // O mês - 1 porque os meses em JS começam do 0
-    return (parseInt(month) - 1) === selectedMonth;
+    return (month - 1) === selectedMonth;
   });
 
   const currentMonthName = format(new Date(currentYear, selectedMonth, 1), 'MMMM', { locale: ptBR });
@@ -196,7 +205,7 @@ const BirthdayList = () => {
       <Box sx={{ flexGrow: 1 }}>
         <Grid container spacing={2} justifyContent="center">
           {loading ? (
-            <Grid item xs={12}>
+            <Grid item sx={{ width: '100%' }}>
               <Typography variant="h6" sx={{ my: 4, textAlign: 'center' }}>
                 Carregando aniversariantes...
               </Typography>
@@ -204,7 +213,7 @@ const BirthdayList = () => {
           ) : (
             <>
               {currentMonthBirthdays.map(person => (
-                <Grid item key={person.id} xs={12} sm={6} md={4}>
+                <Grid item key={person.id} sx={{ width: { xs: '100%', sm: '50%', md: '33.3333%' } }}>
                   <BirthdayCard
                     id={person.id}
                     name={person.name}
@@ -214,7 +223,7 @@ const BirthdayList = () => {
                 </Grid>
               ))}
               {currentMonthBirthdays.length === 0 && (
-                <Grid item xs={12}>
+                <Grid item sx={{ width: '100%' }}>
                   <Typography variant="h6" sx={{ my: 4, textAlign: 'center' }}>
                     Não há aniversariantes neste mês.
                   </Typography>
